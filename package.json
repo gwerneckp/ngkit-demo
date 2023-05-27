@@ -14,6 +14,7 @@
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^2.0.0",
 		"@sveltejs/kit": "^1.5.0",
+		"@types/bcrypt": "^5.0.0",
 		"@typescript-eslint/eslint-plugin": "^5.45.0",
 		"@typescript-eslint/parser": "^5.45.0",
 		"eslint": "^8.28.0",
@@ -30,8 +31,12 @@
 	"type": "module",
 	"dependencies": {
 		"@neo4j/graphql": "^3.20.0",
+		"@neo4j/graphql-ogm": "^3.20.0",
+		"@neo4j/graphql-plugin-auth": "^2.2.0",
 		"all": "^0.0.0",
 		"apollo-server-svelte-kit": "^3.10.0",
+		"bcrypt": "^5.1.0",
+		"jsonwebtoken": "^9.0.0",
 		"neo4j-driver": "^5.9.0"
 	}
 }
