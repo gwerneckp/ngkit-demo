@@ -3,35 +3,43 @@ import { Neo4jGraphQL } from '@neo4j/graphql';
 import { ApolloServer, gql } from 'apollo-server-svelte-kit';
 import { OGM } from '@neo4j/graphql-ogm';
 import { hash, compare } from 'bcrypt';
-import JWT from 'jsonwebtoken';
+import JWT, { type JwtPayload } from 'jsonwebtoken';
 import { Neo4jGraphQLAuthJWTPlugin } from '@neo4j/graphql-plugin-auth';
 
 const driver = neo4j.driver('bolt://localhost:7687', neo4j.auth.basic('neo4j', 'password'));
 
 const typeDefs = gql`
-  type User {
-    id: ID!
-    name: String!
-    password: String! @private
-    posts: [Post!]! @relationship(type: "POSTED_BY", direction: OUT)
-  }
-  
-  type Post {
-    id: ID!
-    title: String!
-    content: String!TG
-    author: User @relationship(type: "POSTED_BY", direction: IN)
-  } 
-  
-  type Query {
-    users: [User]
-    posts: [Post]
-  }
+	type User
+		@auth(rules: [{ operations: [READ, UPDATE, DELETE, CONNECT], allow: { id: "$jwt.id" } }])
+		@exclude(operations: [CREATE]) {
+		id: ID! @id
+		username: String!
+		password: String! @private
+		posts: [Post!]! @relationship(type: "POSTED_BY", direction: OUT)
+	}
 
-  type Mutation {
-    signIn(username: String!, password: String!): User
-    signUp(username: String!, password: String!): User
-  }
+	type Post
+		@auth(
+			rules: [
+				{ operations: [READ], isAuthenticated: true }
+				{ operations: [CREATE, UPDATE, DELETE, CONNECT], allow: { author: { id: "$jwt.id" } } }
+			]
+		) {
+		id: ID! @id
+		title: String!
+		content: String!
+		author: User! @relationship(type: "POSTED_BY", direction: IN)
+	}
+
+	type Query {
+		users: [User]
+		posts: [Post]
+	}
+
+	type Mutation {
+		signIn(username: String!, password: String!): User
+		signUp(username: String!, password: String!): User
+	}
 `;
 
 const ogm = new OGM({ typeDefs, driver });
@@ -96,15 +104,28 @@ const resolvers = {
 const neoSchema = new Neo4jGraphQL({
 	typeDefs: typeDefs,
 	driver: driver,
-	resolvers: resolvers
+	resolvers: resolvers,
+	plugins: {
+		auth: new Neo4jGraphQLAuthJWTPlugin({
+			secret: 'secret-change'
+			// rolesPath: 'sub.role'
+		})
+	}
 });
 
 const server = new ApolloServer({
 	schema: await neoSchema.getSchema(),
 	context: ({ req }) => {
+		let jwt: JwtPayload | string | null;
+		try {
+			jwt = JWT.verify(req.cookies.get('jwt'), 'secret-change');
+		} catch (error) {
+			jwt = null;
+		}
 		return {
 			driver: driver,
-			req: req
+			req: req,
+			jwt: jwt
 		};
 	}
 });
