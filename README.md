@@ -1,5 +1,8 @@
 # NGKIT Stack - Using Neo4j GraphQL Library with Svelte Kit (+ Authentication with JWT)
 
+<!-- ngkit.jpg -->
+![NGKIT Stack](ngkit.jpg)
+
 This repository provides an example project showcasing the integration of Neo4j GraphQL library with Svelte Kit, along with authentication using JSON Web Tokens (JWT). The stack is named NGKIT, inspired by other popular tech stack acronyms.
 
 ## About the Stack
